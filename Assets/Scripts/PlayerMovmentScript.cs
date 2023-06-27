@@ -12,6 +12,7 @@ public class PlayerMovmentScript : MonoBehaviour
     Rigidbody2D myRigidbody;
     Animator myAnimator;
     CapsuleCollider2D myCollider;
+    float startingGravity;
 
     
     void Start()
@@ -19,6 +20,8 @@ public class PlayerMovmentScript : MonoBehaviour
         myRigidbody = GetComponent<Rigidbody2D>();
         myAnimator = GetComponent<Animator>();
         myCollider = GetComponent<CapsuleCollider2D>();
+
+        startingGravity = myRigidbody.gravityScale;
     }
 
     void Update()
@@ -48,12 +51,26 @@ public class PlayerMovmentScript : MonoBehaviour
 
     void ClimbLadder() 
     {
-        if (myCollider.IsTouchingLayers(LayerMask.GetMask("Climbing"))) 
-        {
-            Vector2 playerClimbVelocity = new Vector2 (myRigidbody.velocity.x, moveInput.y * climbSpeed);
-            myRigidbody.velocity = playerClimbVelocity;
 
+        
+
+        if (!myCollider.IsTouchingLayers(LayerMask.GetMask("Climbing"))) 
+        { 
+            myRigidbody.gravityScale = startingGravity;
+            myAnimator.SetBool("isClimbing", false);
+            return;
         }
+
+        myAnimator.SetBool("isRunning", false);
+
+        Vector2 playerClimbVelocity = new Vector2 (myRigidbody.velocity.x, moveInput.y * climbSpeed);
+        myRigidbody.velocity = playerClimbVelocity;
+        myRigidbody.gravityScale = 0f;
+
+        bool playerHasVerticalSpeed = Mathf.Abs(myRigidbody.velocity.y) > Mathf.Epsilon;
+        myAnimator.SetBool("isClimbing", playerHasVerticalSpeed);
+
+        
 
     }
 
@@ -62,16 +79,16 @@ public class PlayerMovmentScript : MonoBehaviour
         Vector2 playerVelocity = new Vector2 (moveInput.x * movementSpeed, myRigidbody.velocity.y);
         myRigidbody.velocity = playerVelocity;
 
-        bool plazerHasHoriyontalSpeed = Mathf.Abs(myRigidbody.velocity.x) > Mathf.Epsilon;
-        myAnimator.SetBool("isRunning", plazerHasHoriyontalSpeed);
+        bool playerHasHorizontalSpeed = Mathf.Abs(myRigidbody.velocity.x) > Mathf.Epsilon;
+        myAnimator.SetBool("isRunning", playerHasHorizontalSpeed);
         
     }
 
     void FlipSprite()
     {
-        bool plazerHasHoriyontalSpeed = Mathf.Abs(myRigidbody.velocity.x) > Mathf.Epsilon;
+        bool playerHasHorizontalSpeed = Mathf.Abs(myRigidbody.velocity.x) > Mathf.Epsilon;
 
-        if (plazerHasHoriyontalSpeed)
+        if (playerHasHorizontalSpeed)
         {
            transform.localScale = new Vector2 (Mathf.Sign(myRigidbody.velocity.x), 1f); 
         }
