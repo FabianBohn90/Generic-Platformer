@@ -8,39 +8,47 @@ public class PlayerMovmentScript : MonoBehaviour
     [SerializeField] float movementSpeed = 8f;
     [SerializeField] float jumpSpeed = 8f;
     [SerializeField] float climbSpeed = 8f;
+    [SerializeField] Vector2 deathKick = new Vector2 (10f,10f);
     Vector2 moveInput;
     Rigidbody2D myRigidbody;
     Animator myAnimator;
-    CapsuleCollider2D myCollider;
+    CapsuleCollider2D myBodyCollider;
+    BoxCollider2D myFeetCollider;
     float startingGravity;
+bool isAlive = true;
 
     
     void Start()
     {
         myRigidbody = GetComponent<Rigidbody2D>();
         myAnimator = GetComponent<Animator>();
-        myCollider = GetComponent<CapsuleCollider2D>();
+        myBodyCollider = GetComponent<CapsuleCollider2D>();
+        myFeetCollider = GetComponent<BoxCollider2D>();
 
         startingGravity = myRigidbody.gravityScale;
     }
 
     void Update()
     {
+        if (!isAlive) { return; }
         Run();
         FlipSprite();
         ClimbLadder();
+        Die();
         
     }
 
     void OnMove(InputValue value)
     {
+        if (!isAlive) { return; }
         moveInput = value.Get<Vector2>();
         Debug.Log(moveInput);
     }
 
     void OnJump(InputValue value) 
     {
-        if (!myCollider.IsTouchingLayers(LayerMask.GetMask("Ground"))) { return;}
+        if (!isAlive) { return; }
+        if (!myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Ground"))) { return;}
 
         if (value.isPressed)
         {
@@ -54,7 +62,7 @@ public class PlayerMovmentScript : MonoBehaviour
 
         
 
-        if (!myCollider.IsTouchingLayers(LayerMask.GetMask("Climbing"))) 
+        if (!myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing"))) 
         { 
             myRigidbody.gravityScale = startingGravity;
             myAnimator.SetBool("isClimbing", false);
@@ -94,5 +102,16 @@ public class PlayerMovmentScript : MonoBehaviour
         }
         
 
+    }
+
+    void Die()
+    {
+        if (myBodyCollider.IsTouchingLayers(LayerMask.GetMask("Enemys","Hazard")))
+        {
+            isAlive = false;
+            myAnimator.SetTrigger("Dying");
+            myRigidbody.velocity = deathKick;
+    
+        }
     }
 }
